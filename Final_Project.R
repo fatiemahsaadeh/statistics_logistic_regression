@@ -15,8 +15,14 @@ print(str(diabetes))
 Age <- cut(diabetes$Age, c(seq(20, 70, by = 10), Inf), include.lowest = TRUE)
 Age_fac <- factor(Age, levels=c('[20,30]', '(30,40]', '(40,50]','(50,60]', '(60,70]', '(70,Inf]'))
 outcomes_fac <- ifelse(diabetes$Outcome, "yes", "no")
+boxplot(diabetes$DiabetesPedigreeFunction~Age_fac,data=diabetes, main="DiabetesPedigreeFunction per Age ",
+        xlab="AGE", ylab="DiabetesPedigreeFunction", col="brown")
+boxplot(diabetes$BMI~Age_fac,data=diabetes, main="BMI per Age",
+        xlab="AGE", ylab="BMI", col="brown")
 boxplot(diabetes$BMI~outcomes_fac,data=diabetes, main="Diabetes outcome based on BMI results ",
         xlab="Outcome", ylab="BMI", col="brown")
+boxplot(diabetes$BMI~outcomes_fac,data=diabetes, main="Diabetes outcome based on DiabetesPedigreeFunction results ",
+        xlab="Outcome", ylab="DiabetesPedigreeFunction", col="brown")
 I1<-sample(768,615)
 dsampletrain<-diabetes[I1,]
 dsampletest<-diabetes[-I1,]
