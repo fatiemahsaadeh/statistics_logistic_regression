@@ -5,7 +5,8 @@ library(randomForest)
 library(caret)
 library(rpart.plot)
 library(data.table) 
-print(getwd()) 
+
+# dataset from https://www.kaggle.com/uciml/pima-indians-diabetes-database
 diabetes <- read.csv(file = "diabetes.csv",
          header = TRUE,
          sep = ",")
