@@ -8,9 +8,13 @@ library(data.table)
 
 # dataset from https://www.kaggle.com/uciml/pima-indians-diabetes-database
 
-#read the data
+# Dataset from https://www.kaggle.com/uciml/pima-indians-diabetes-database
 diabetes <- read.csv(file = "diabetes.csv",header = TRUE,sep = ",")
+
+# Show the data structure, There are 768 observations of 9 variables
 str(diabetes)
+
+# Some plots
 Age <- cut(diabetes$Age, c(seq(20, 70, by = 10), Inf), include.lowest = TRUE)
 Age_fac <- factor(Age, levels=c('[20,30]', '(30,40]', '(40,50]','(50,60]', '(60,70]', '(70,Inf]'))
 outcomes_fac <- ifelse(diabetes$Outcome, "yes", "no")
@@ -22,16 +26,50 @@ boxplot(diabetes$BMI~outcomes_fac,data=diabetes, main="Diabetes outcome based on
         xlab="Outcome", ylab="BMI", col="brown")
 boxplot(diabetes$BMI~outcomes_fac,data=diabetes, main="Diabetes outcome based on DiabetesPedigreeFunction results ",
         xlab="Outcome", ylab="DiabetesPedigreeFunction", col="brown")
-I1<-sample(768,615)
-dsampletrain<-diabetes[I1,]
-dsampletest<-diabetes[-I1,]
-outcomes_fac <- ifelse(dsampletest$Outcome, "yes", "no")
 
-model_dt<-rpart(Outcome~Pregnancies+Glucose+BloodPressure+BMI+DiabetesPedigreeFunction+Age, data=dsampletrain, method = 'class')
+# index_train using 1/3 of the data 
+index_train<-sample(768,256)
+
+# Create the TRAINING SET
+training_set <- data[index_train, ]
+
+# Create the TEST SET
+test_set <- data[-index_train, ]
+
+outcomes_fac <- ifelse(test_set$Outcome, "yes", "no")
+
+# Fit the Logistic Regression Model using the training_set 
+logistic_model <- glm(Outcome ~ ., family = "binomial", data = training_set)
+
+# The statistically significant variables : Pregnancies, Glucose, BMI, DiabetesPedigreeFunction 
+# not statistically significant variables : BloodPressure, SkinThickness, Insulin and Age are 
+print(summary(logistic_model))
+print(summary(logistic_model)$coeff[-1,4] < 0.05)
+
+# predictions using logistic regression model for the test set
+predictions_logistic <- predict(logistic_model, newdata = test_set, type = "response") 
+
+# wide range means the model is good for predicting diabetes
+print(range(predictions_logistic))
+
+# Construct a Decision Tree 
+model_dt<-rpart(Outcome~Pregnancies+Glucose+BloodPressure+BMI+DiabetesPedigreeFunction+Age, data=training_set, method = 'class')
+
+# Plot the decision trees 
 rpart.plot(model_dt)
-pred<-predict(model_dt,newdata=dsampletest,type="class") 
-print(length(pred))
-print(length(dsampletest$Outcom))
-dsampletest$Outcome <- ifelse(dsampletest$Outcome, "yes", "no")
-table_mat <- table(dsampletest$Outcome,pred)
-print(table_mat)
+
+# Make predictions for the probability of default using the decision tree created 
+predictions_tree <- predict(model_dt, newdata = test_set)[ ,2]
+
+# Make binary predictions for the original tree using the test set 
+predictions_binary_tree <- predict(model_dt, newdata = test_set, type = "class")
+
+# Construct confusion matrices using the predictions.
+confmatrix_tree <- table(test_set$Outcome, predictions_tree)
+
+# Calculate for the decision tree accuracy 90.5%
+accuracy_tree <- sum(diag(confmatrix_tree)) / nrow(confmatrix_tree)
+
+print(confmatrix_tree)
+print (accuracy_tree)
+
