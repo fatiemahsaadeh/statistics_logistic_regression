@@ -6,7 +6,6 @@ library(caret)
 library(rpart.plot)
 library(data.table) 
 
-# dataset from https://www.kaggle.com/uciml/pima-indians-diabetes-database
 
 # Dataset from https://www.kaggle.com/uciml/pima-indians-diabetes-database
 diabetes <- read.csv(file = "diabetes.csv",header = TRUE,sep = ",")
@@ -50,7 +49,14 @@ print(summary(logistic_model)$coeff[-1,4] < 0.05)
 predictions_logistic <- predict(logistic_model, newdata = test_set, type = "response") 
 
 # wide range means the model is good for predicting diabetes
-print(range(predictions_logistic))
+
+xInsulin <-seq (0, 1000, 10)
+Insulin_logistic_model <- glm(Outcome ~ Insulin, family = "binomial", data = training_set)
+
+Insulin_predictions_logistic <- predict(Insulin_logistic_model, list(Insulin=xInsulin),type="response")
+
+plot(training_set$Insulin, training_set$Outcome, pch = 16, xlab = "Insulin Level", ylab = "Outcome")
+lines(xInsulin, Insulin_predictions_logistic, col = "blue", lwd = 2)
 
 # Construct a Decision Tree 
 model_dt<-rpart(Outcome~Pregnancies+Glucose+BloodPressure+BMI+DiabetesPedigreeFunction+Age, data=training_set, method = 'class')
@@ -58,18 +64,17 @@ model_dt<-rpart(Outcome~Pregnancies+Glucose+BloodPressure+BMI+DiabetesPedigreeFu
 # Plot the decision trees 
 rpart.plot(model_dt)
 
-# Make predictions for the probability of default using the decision tree created 
-predictions_tree <- predict(model_dt, newdata = test_set)[ ,2]
+
 
 # Make binary predictions for the original tree using the test set 
-predictions_binary_tree <- predict(model_dt, newdata = test_set, type = "class")
+predictions_tree <- predict(model_dt, newdata = test_set, type = "class")
 
 # Construct confusion matrices using the predictions.
 confmatrix_tree <- table(test_set$Outcome, predictions_tree)
 
-# Calculate for the decision tree accuracy 90.5%
-accuracy_tree <- sum(diag(confmatrix_tree)) / nrow(confmatrix_tree)
 
+# Calculate for the decision tree accuracy 90.5%
+accuracy_tree <- sum(diag(confmatrix_tree))/sum(confmatrix_tree)
 print(confmatrix_tree)
 print (accuracy_tree)
 
